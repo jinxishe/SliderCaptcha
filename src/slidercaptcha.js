@@ -7,7 +7,7 @@
         if (typeof target != "object" && typeof target != "function") {
             target = {};
         }
-        if (length == 1) {
+        if (length === 1) {
             target = this;
             i--;
         }
@@ -107,6 +107,12 @@
         var block = canvas.cloneNode(true); // 滑块
         var sliderContainer = createElement('div', 'sliderContainer');
         var refreshIcon = createElement('i', 'refreshIcon ' + this.options.repeatIcon);
+
+        //add by seki start
+        var refreshIconDiv = createElement('div');
+        refreshIconDiv.appendChild(refreshIcon);
+        //add by seki end
+
         var sliderMask = createElement('div', 'sliderMask');
         var sliderbg = createElement('div', 'sliderbg');
         var slider = createElement('div', 'slider');
@@ -118,7 +124,10 @@
 
         var el = this.$element;
         el.appendChild(canvas);
-        el.appendChild(refreshIcon);
+
+        // el.appendChild(refreshIcon);
+        el.appendChild(refreshIconDiv);
+
         el.appendChild(block);
         slider.appendChild(sliderIcon);
         sliderMask.appendChild(slider);
@@ -131,7 +140,9 @@
             canvas: canvas,
             block: block,
             sliderContainer: sliderContainer,
-            refreshIcon: refreshIcon,
+            // refreshIcon: refreshIcon,
+            refreshIcon: refreshIconDiv,
+
             slider: slider,
             sliderMask: sliderMask,
             sliderIcon: sliderIcon,
@@ -142,8 +153,7 @@
 
         if (isFunction(Object.assign)) {
             Object.assign(this, _canvas);
-        }
-        else {
+        } else {
             extend(this, _canvas);
         }
     };
@@ -168,8 +178,8 @@
             ctx.arc(x + r - 2, y + l / 2, r + 0.4, 2.76 * PI, 1.24 * PI, true);
             ctx.lineTo(x, y);
             ctx.lineWidth = 2;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
             ctx.stroke();
             ctx[operation]();
             ctx.globalCompositeOperation = isIE ? 'xor' : 'destination-over';
@@ -178,6 +188,7 @@
         var getRandomNumberByRange = function (start, end) {
             return Math.round(Math.random() * (end - start) + start);
         };
+
         var img = new Image();
         img.crossOrigin = "Anonymous";
         var loadCount = 0;
@@ -188,8 +199,17 @@
             drawImg(that.canvasCtx, 'fill');
             drawImg(that.blockCtx, 'clip');
 
-            that.canvasCtx.drawImage(img, 0, 0, that.options.width - 2, that.options.height);
-            that.blockCtx.drawImage(img, 0, 0, that.options.width - 2, that.options.height);
+            // that.canvasCtx.drawImage(img, 0, 0, that.options.width - 2, that.options.height);
+            // that.blockCtx.drawImage(img, 0, 0, that.options.width - 2, that.options.height);
+            that.canvasCtx.drawImage(img,
+                0, 0, img.width, img.height / 2,
+                0, 0, that.options.width - 2, that.options.height);
+
+            that.blockCtx.drawImage(img,
+                0, 0, img.width, img.height / 2,
+                0, 0, that.options.width - 2, that.options.height);
+
+
             var y = that.y - that.options.sliderR * 2 - 1;
             var ImageData = that.blockCtx.getImageData(that.x - 3, y, L, L);
             that.block.width = L;
@@ -247,11 +267,24 @@
             return false;
         });
 
+        console.log('bindEvents');
+
+
+        console.log(this.refreshIcon);
+
         this.refreshIcon.addEventListener('click', function () {
+            console.log('refreshIcon.click');
             that.text.textContent = that.options.barText;
             that.reset();
             if (isFunction(that.options.onRefresh)) that.options.onRefresh.call(that.$element);
         });
+
+        // this.refreshIconDiv.addEventListener('click', function () {
+        //   console.log('refreshIcon.click');
+        //   that.text.textContent = that.options.barText;
+        //   that.reset();
+        //   if (isFunction(that.options.onRefresh)) that.options.onRefresh.call(that.$element);
+        // });
 
         var originX, originY, trail = [],
             isMouseDown = false;
@@ -296,20 +329,40 @@
                 setTimeout(function () {
                     that.text.innerHTML = that.options.failedText;
                     that.reset();
-                }, 1000);
+                    // }, 1000);
+                    // 缩短失败后的延时
+                }, 500);
             }
         };
 
         this.slider.addEventListener('mousedown', handleDragStart);
         this.slider.addEventListener('touchstart', handleDragStart);
-        document.addEventListener('mousemove', handleDragMove);
-        document.addEventListener('touchmove', handleDragMove);
-        document.addEventListener('mouseup', handleDragEnd);
-        document.addEventListener('touchend', handleDragEnd);
+        // document.addEventListener('mousemove', handleDragMove);
+        // document.addEventListener('touchmove', handleDragMove);
+        // document.addEventListener('mouseup', handleDragEnd);
+        // document.addEventListener('touchend', handleDragEnd);
+        // document.addEventListener('mousedown', function () { return false; });
+        // document.addEventListener('touchstart', function () { return false; });
+        // document.addEventListener('swipe', function () { return false; });
+        this.slider.addEventListener('mousemove', handleDragMove);
+        this.slider.addEventListener('touchmove', handleDragMove);
+        this.slider.addEventListener('mouseup', handleDragEnd);
+        this.slider.addEventListener('touchend', handleDragEnd);
+        this.slider.addEventListener('mousedown', function () { return false; });
+        this.slider.addEventListener('touchstart', function () { return false; });
+        this.slider.addEventListener('swipe', function () { return false; });
 
-        document.addEventListener('mousedown', function () { return false; });
-        document.addEventListener('touchstart', function () { return false; });
-        document.addEventListener('swipe', function () { return false; });
+
+        this.block.addEventListener('mousedown', handleDragStart);
+        this.block.addEventListener('touchstart', handleDragStart);
+        this.block.addEventListener('mousemove', handleDragMove);
+        this.block.addEventListener('touchmove', handleDragMove);
+        this.block.addEventListener('mouseup', handleDragEnd);
+        this.block.addEventListener('touchend', handleDragEnd);
+        this.block.addEventListener('mousedown', function () { return false; });
+        this.block.addEventListener('touchstart', function () { return false; });
+        this.block.addEventListener('swipe', function () { return false; });
+
     };
 
     _proto.verify = function () {
@@ -318,12 +371,17 @@
         var verified = false;
         if (this.options.remoteUrl !== null) {
             verified = this.options.verify(arr, this.options.remoteUrl);
-        }
-        else {
-            var sum = function (x, y) { return x + y; };
-            var square = function (x) { return x * x; };
+        } else {
+            var sum = function (x, y) {
+                return x + y;
+            };
+            var square = function (x) {
+                return x * x;
+            };
             var average = arr.reduce(sum) / arr.length;
-            var deviations = arr.map(function (x) { return x - average; });
+            var deviations = arr.map(function (x) {
+                return x - average;
+            });
             var stddev = Math.sqrt(deviations.map(square).reduce(sum) / arr.length);
             verified = stddev !== 0;
         }
